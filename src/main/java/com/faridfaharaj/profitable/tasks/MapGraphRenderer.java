@@ -14,6 +14,7 @@ import org.bukkit.map.MapView;
 import org.bukkit.map.MinecraftFont;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class MapGraphRenderer extends MapRenderer {
@@ -38,13 +39,12 @@ public class MapGraphRenderer extends MapRenderer {
     public void render(MapView map, MapCanvas canvas, Player player) {
         if (rendered) return;
         rendered = true;
-
-
-        canvas.drawText(1, 1, MinecraftFont.Font, asset + " (" + interval + ")");
+        // 绘制中文
+        drawChineseText(canvas, 1, 1, asset + " (" + interval + ")", Color.WHITE);
 
         int bottomOffset = 2;
         int bottom = 128 - bottomOffset;
-        int top = 128-bottomOffset-10;
+        int top = 128-bottomOffset-22;
 
         rectangle(canvas, 0, bottom-top-1,128, bottom-top-1, graphColor);
 
@@ -62,9 +62,7 @@ public class MapGraphRenderer extends MapRenderer {
         }
 
         if(candles.size() <= 1){
-
             canvas.drawText(46, bottom - top/2 - 5, MinecraftFont.Font, "No data");
-
             return;
         }
 
@@ -232,4 +230,40 @@ public class MapGraphRenderer extends MapRenderer {
         return new Color(r, g, b, alphaOut);
     }
 
+    /**
+     * 绘制文本设定
+     */
+    private void drawChineseText(MapCanvas canvas, int x, int y, String text, Color color) {
+        // 1. 增加图片高度，防止文字下半部分被切掉
+        int fontSize = 13; // 建议 12-14 之间
+        BufferedImage image = new BufferedImage(128, fontSize + 5, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+
+        // 2. 字体设置
+        // 尝试使用 "Microsoft YaHei" , "SimSun" 或 "WenQuanYi Micro Hei"
+        Font font = new Font("SimSun", Font.PLAIN, fontSize);
+        
+        g.setFont(font);
+
+        // 3. 抗锯齿设置
+        // 有时候关闭抗锯齿(VALUE_TEXT_ANTIALIAS_OFF)反而比开启更清晰（像素风）
+        g.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        
+        // 提高文字渲染质量的额外参数
+        g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(java.awt.RenderingHints.KEY_FRACTIONALMETRICS, java.awt.RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+        g.setColor(color);
+
+        // 4. 绘制文字
+        // 获取字体度量，确保垂直居中或贴底
+        FontMetrics metrics = g.getFontMetrics(font);
+        int yPosition = metrics.getAscent(); 
+        
+        g.drawString(text, 0, yPosition);
+        g.dispose();
+
+        // 将生成的文字图片贴到地图上
+        canvas.drawImage(x, y, image);
+    }
 }
