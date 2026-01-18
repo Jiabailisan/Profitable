@@ -40,7 +40,30 @@ public class ComEntity extends Asset {
 
     public void sendCommodityEntityToPlayer(Player player, String account, int amount){
 
-        EntityType entityType = EntityType.fromName(stack.getType().name().replace("SPAWN_",""));
+        // --- 修复实体从钱包中取出时无法生成的问题 ---
+        String typeName = stack.getType().name();
+        EntityType tempType = null;
+
+        // 1. 尝试通过移除 _SPAWN_EGG 来匹配实体 (例如 ZOMBIE_SPAWN_EGG -> ZOMBIE)
+        try {
+            tempType = EntityType.valueOf(typeName.replace("_SPAWN_EGG",""));
+        } catch (IllegalArgumentException e) {
+            // 如果匹配失败，忽略，尝试旧方法
+        }
+
+        // 2. 如果上面失败了，尝试使用旧的 fromName 方法
+        if (tempType == null) {
+            tempType = EntityType.fromName(typeName.replace("_SPAWN_EGG",""));
+        }
+
+        // 3. 安全检查
+        if (tempType == null) {
+            org.bukkit.Bukkit.getLogger().warning("[Profitable] 错误: 无法从物品 " + typeName + " 中解析出实体类型(EntityType)。请检查该商品的配置是否为刷怪蛋(Spawn Egg)。");
+            return; // 直接返回，防止崩溃
+        }
+
+        final EntityType entityType = tempType;
+        // --- 修复结束 ---
 
         String claimId = Accounts.getEntityClaimId(player.getWorld(),account);
         Profitable.getfolialib().getScheduler().runAtEntity(player, task -> {
@@ -48,6 +71,7 @@ public class ComEntity extends Asset {
             Location location = player.getLocation();
 
             for(int i = 0; i<amount; i++){
+                // 这里 entityType 已经确保不为 null 了
                 Entity entity = world.spawnEntity(location, entityType);
                 entity.setCustomName(claimId);
                 entity.setCustomNameVisible(true);
