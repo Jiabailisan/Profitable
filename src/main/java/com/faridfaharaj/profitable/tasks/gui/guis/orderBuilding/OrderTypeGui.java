@@ -74,12 +74,34 @@ public final class OrderTypeGui extends ChestGUI {
                     new BuySellGui(assetCache, assetData, bidOrders, askOrders).openGui(player);
                 }
 
+                // 修复买单价格显示Double最大值
                 if(button == buttons[1]){
                     if(allowMarket){
                         player.closeInventory();
-                        new UnitsSelect(assetCache, assetData, new Order(order.getUuid(), order.getOwner(), order.getAsset(), order.isSideBuy(), order.isSideBuy()?Double.MAX_VALUE:Double.MIN_VALUE, order.getUnits(), Order.OrderType.MARKET), bidOrders, askOrders).openGui(player);
+
+                        // 计算显示用的预估价格，而不是使用 Double.MAX_VALUE
+                        double displayPrice;
+                        if (order.isSideBuy()) {
+                            // 买入：查看卖单(askOrders)，取最低价(Min)
+                            displayPrice = askOrders.stream()
+                                    .mapToDouble(Order::getPrice)
+                                    .min()
+                                    .orElse(0.0);
+                        } else {
+                            // 卖出：查看买单(bidOrders)，取最高价(Max)
+                            displayPrice = bidOrders.stream()
+                                    .mapToDouble(Order::getPrice)
+                                    .max()
+                                    .orElse(0.0);
+                        }
+
+                        // 将计算出的 displayPrice 传入 Order 构造函数
+                        new UnitsSelect(assetCache, assetData, 
+                            new Order(order.getUuid(), order.getOwner(), order.getAsset(), order.isSideBuy(), displayPrice, order.getUnits(), Order.OrderType.MARKET), 
+                            bidOrders, askOrders).openGui(player);
                     }
                 }
+                // --------- 修复结束 ---------
 
                 if(button == buttons[2]){
                     player.closeInventory();
