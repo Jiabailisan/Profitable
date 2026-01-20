@@ -280,18 +280,31 @@ public class Exchange {
             // Insert
             Orders.insertOrder(player.getWorld(), UUID.randomUUID(), order.getOwner(), order.getAsset(), order.isSideBuy(), order.getPrice(), order.getUnits(), order.getType());
 
-            // Feedback
-            Profitable.getfolialib().getScheduler().runAtEntity(player, task -> player.playSound(player, Sound.ITEM_BOOK_PAGE_TURN, 1 , 1));
+             // 1. 上架广播
+            if (!order.isSideBuy()) {
+                String assetName = MessagingUtil.assetAmmount(tradedasset, order.getUnits());
+                // 读取语言文件: exchange.broadcast.new-listing
+                Component broadcastMsg = Profitable.getLang().get("exchange.broadcast.new-listing",
+                        Map.entry("%asset_amount%", assetName)
+                );
+                Profitable.getInstance().getServer().broadcast(broadcastMsg);
+            }
 
-            MessagingUtil.sendComponentMessage(player,Profitable.getLang().get("exchange.new-order-notice",
-                            Map.entry("%order_type%", order.getType().toString().replace("_","-").toLowerCase()),
-                            Map.entry("%side%", order.isSideBuy()?
-                                    Profitable.getLang().getString("orders.sides.buy"):
-                                    Profitable.getLang().getString("orders.sides.sell")),
-                            Map.entry("%base_asset_amount%", MessagingUtil.assetAmmount(tradedasset, order.getUnits())),
-                            Map.entry("%quote_asset_amount%", MessagingUtil.assetAmmount(currency, order.getPrice()))
-                            )
-            );
+            // 2. 求购广播
+            if (order.isSideBuy()) {
+                // 获取物品名称和数量
+                String assetName = MessagingUtil.assetAmmount(tradedasset, order.getUnits());
+                
+                // 获取价格格式化
+                String priceDisplay = MessagingUtil.assetAmmount(currency, order.getPrice());
+
+                // 读取语言文件: exchange.broadcast.new-buy-order
+                Component broadcastMsg = Profitable.getLang().get("exchange.broadcast.new-buy-order",
+                        Map.entry("%asset_amount%", assetName),
+                        Map.entry("%price_amount%", priceDisplay)
+                );
+                Profitable.getInstance().getServer().broadcast(broadcastMsg);
+            }
 
             if(order.isSideBuy()){
 
