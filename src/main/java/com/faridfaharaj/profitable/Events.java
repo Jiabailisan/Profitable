@@ -103,8 +103,15 @@ public class Events implements Listener {
         }
     }
 
-    @EventHandler
+    // 修改 1: 添加 priority = EventPriority.HIGH 和 ignoreCancelled = true
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerInteractAtEntity(PlayerInteractEntityEvent event) {
+        
+        // 修改 2: 双重保险，如果事件已被取消则直接返回
+        if (event.isCancelled()) {
+            return;
+        }
+
         Player player = event.getPlayer();
         if(Objects.equals(TemporalItems.holdingTemp.get(player.getUniqueId()), TemporalItems.TemporalItem.CLAIMINGTAG)){
             runItmCooldown(Material.NAME_TAG, event.getPlayer(), () -> {
@@ -135,6 +142,7 @@ public class Events implements Listener {
 
                 }
             });
+            
             event.setCancelled(true);
         }
     }
