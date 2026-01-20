@@ -60,6 +60,9 @@ exchange:
     invalid-buy-stop-trigger: "<red>Stop trigger price must be higher than market's when buying</red>"
     cant-self-transact: "<red>You can't transact with yourself!, cancel current order first</red>"
     no-orders-found: "<red>No orders available, use limit order instead!</red>"
+  broadcast:
+    new-listing: "<gray>[Profitable] <yellow>New Arrivals: <aqua>%asset_amount%"
+    new-buy-order: "<gray>[Profitable] <green>New Purchase Request: <aqua>%asset_amount% <gray>Price: <gold>%price_amount%"
 
 assets:
   amount-display: "%amount% %asset%"
